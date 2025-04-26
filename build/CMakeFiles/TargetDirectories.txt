@@ -1,7 +1,0 @@
-/Users/harsha/Documents/Nebulon/Projects/c_projects/uJSON/build/CMakeFiles/uJSON.dir
-/Users/harsha/Documents/Nebulon/Projects/c_projects/uJSON/build/CMakeFiles/edit_cache.dir
-/Users/harsha/Documents/Nebulon/Projects/c_projects/uJSON/build/CMakeFiles/rebuild_cache.dir
-/Users/harsha/Documents/Nebulon/Projects/c_projects/uJSON/build/CMakeFiles/list_install_components.dir
-/Users/harsha/Documents/Nebulon/Projects/c_projects/uJSON/build/CMakeFiles/install.dir
-/Users/harsha/Documents/Nebulon/Projects/c_projects/uJSON/build/CMakeFiles/install/local.dir
-/Users/harsha/Documents/Nebulon/Projects/c_projects/uJSON/build/CMakeFiles/install/strip.dir

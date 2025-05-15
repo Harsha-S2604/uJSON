@@ -1,4 +1,29 @@
+message("INSTALLING UJSON...")
+
 cmake_minimum_required(VERSION 3.31.6)
-project(uJSON)
-add_executable(${PROJECT_NAME} main.c)
-install(TARGETS ${PROJECT_NAME})
+
+project(ujson 
+    VERSION 1.0
+    DESCRIPTION "a library that parses the JSON string")
+
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED True)
+set(CMAKE_INSTALL_INCLUDEDIR "${CMAKE_INSTALL_PREFIX}/include")
+set(CMAKE_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/lib")
+set(CMAKE_INSTALL_BINDIR "${CMAKE_INSTALL_PREFIX}/bin")
+
+set(UJSON_LIB ujson)
+set(SOURCES ujson.c)
+set(HEADERS ujson.h)
+
+add_library("${UJSON_LIB}" "${SOURCES}")
+target_include_directories(${UJSON_LIB} PUBLIC ${CMAKE_SOURCE_DIR})
+
+install(FILES ujson.h DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/ujson")
+install(TARGETS "${UJSON_LIB}"
+        EXPORT "${UJSON_LIB}"
+        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+        INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
+

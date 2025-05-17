@@ -2,5 +2,5 @@
 #include <ujson/ujson.h>
 
 int main() {
-    printf("Library linking testing");
+    ujson_parser("{}");
 }

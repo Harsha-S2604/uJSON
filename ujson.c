@@ -10,7 +10,9 @@ typedef struct ujson_buffer {
     size_t idx;
 } ujson_buffer;
 
-static ujson_buffer input_buffer = {0, 0, 0};
+#define buffer_at_idx(buffer) ((buffer).content[(buffer).idx]) 
+
+ujson_buffer input_buffer = {0, 0, 0};
 
 static JSON* create_new_item() {
     JSON* item = malloc(sizeof(JSON));
@@ -26,6 +28,7 @@ static void init_buffer(char* content) {
 
     input_buffer.content = (const unsigned char*)content;
     input_buffer.length = total_characters;
+    input_buffer.idx = 0;
 }
 
 static void ignore_whitespaces(char* json_string, size_t total_chars, size_t* idx) {
@@ -74,19 +77,27 @@ static char* parse_string(char* json_string, char char_to_find, size_t* index, s
     return parsed_string;
 }
 
-static UJSON_DATA_TYPES parse_data_type(char c) {
-    UJSON_DATA_TYPES dataType;
+static int get_data_type(char c) {
+    int dataType;
 
     switch (c) {
         case '"':
-            dataType = 0;
+            dataType = UJSON_STRING;
+            break;
+        case '{':
+            dataType = UJSON_OBJECT;
+            break;
+        default:
+            if (c >= '0' && c <= '9') {
+                dataType = UJSON_INTEGER;
+            }
             break;
     }
 
     return dataType;
 }
 
-static void parse_value(char* json_string, char* key, size_t* start_idx, size_t total_chars, JSON* json) {
+/* static void parse_value(char* json_string, char* key, size_t* start_idx, size_t total_chars, JSON* json) {
 
     // ignore whitespace if any
     ignore_whitespaces(json_string, total_chars, start_idx);
@@ -110,6 +121,34 @@ static void parse_value(char* json_string, char* key, size_t* start_idx, size_t 
             break;
     }
 
+}*/
+
+static int parse_number(JSON* json_value) {
+    int integerValue = 1;
+    char number = buffer_at_idx(input_buffer);
+
+    while (number != '\0') {
+        if (number == '.') {
+            integerValue = 0;
+        } else if (!(number >= '0' && number <= '9')) {
+            return 0;
+        }
+        
+        number = buffer_at_idx(input_buffer);
+        input_buffer.idx += 1;
+    }
+
+    if (integerValue) {
+        size_t intValue = atof((const char*)input_buffer.content);
+        json_value -> dataType = UJSON_INTEGER;
+        json_value -> intValue = intValue;
+    } else {
+        double floatValue = atof((const char*)input_buffer.content);
+        json_value -> dataType = UJSON_FLOAT;
+        json_value -> floatValue = floatValue;
+    }
+
+    return 1;
 }
 
 static int ujson_parse(JSON* json_value) {
@@ -119,26 +158,33 @@ static int ujson_parse(JSON* json_value) {
 
     // parsing null
     if (strncmp((const char*)input_buffer.content, "null", 4) == 0) {
-        json_value -> dataType = 0;
+        json_value -> dataType = UJSON_NULL;
         input_buffer.idx += 4;
         return 1;
     }
 
     // parsing true
     if (strncmp((const char*)input_buffer.content, "true", 4) == 0) {
-        json_value -> dataType = 1;
+        json_value -> dataType = UJSON_TRUE;
         input_buffer.idx += 4;
         return 1;
     }
 
     // parsing false
     if (strncmp((const char*)input_buffer.content, "false", 5) == 0) {
-        json_value -> dataType = 2;
+        json_value -> dataType = UJSON_FALSE;
         input_buffer.idx += 5;
         return 1;
     }
-    
-    return 1;
+
+    // parsing number
+    char char_at_idx = buffer_at_idx(input_buffer);
+    if (char_at_idx >= '0' && char_at_idx <= '9') {
+        parse_number(json_value);
+        return 1;
+    }
+
+    return 0;
 }
 
 /* static int ujson_parse_object(JSON** json_value) {

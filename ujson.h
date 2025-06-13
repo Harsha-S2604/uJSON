@@ -1,23 +1,25 @@
 #ifndef UJSON_H
 #define UJSON_H
 
-typedef enum {
-    UJSON_NULL,
-    UJSON_TRUE,
-    UJSON_FALSE,
-    UJSON_STRING,
-    UJSON_INTEGER,
-    UJSON_FLOAT,
-    UJSON_ARRAY_OF_STRINGS,
-    UJSON_ARRAY_OF_INTEGERS,
-    UJSON_ARRAY_OF_FLOATS,
-} UJSON_DATA_TYPES;
+#define UJSON_NULL 0
+#define UJSON_TRUE 1
+#define UJSON_FALSE 2
+#define UJSON_STRING 3
+#define UJSON_INTEGER 4
+#define UJSON_FLOAT 5
+#define UJSON_ARRAY_OF_STRINGS 6
+#define UJSON_ARRAY_OF_INTEGERS 7
+#define UJSON_ARRAY_OF_FLOATS 8
+#define UJSON_OBJECT 9
 
 typedef struct JSON {
-    UJSON_DATA_TYPES dataType;
+    int dataType;
 
     char* key;
     char* strValue;
+    
+    size_t intValue;
+    double floatValue;
 
     struct JSON* next;
 } JSON;

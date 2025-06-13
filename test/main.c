@@ -1,15 +1,17 @@
 #include <stdio.h>
 #include <ujson/ujson.h>
 
-int main() {
-    JSON* json_value = ujson_parser("{\"name\": \"Jack\"}");
-    JSON* json = json_value;
-
-    while(json) {
+void print_value(JSON* json) {
+    while(json != NULL) {
         switch (json -> dataType) {
             case 0:
-                printf("The key is %s\n", json -> key);
-                printf("The value is %s\n", json -> strValue);
+                printf("null\n");
+                break;
+            case 1:
+                printf("true\n");
+                break;
+            case 2:
+                printf("false\n");
                 break;
             default:
                 break;
@@ -17,4 +19,14 @@ int main() {
 
         json = json -> next;
     }
+
+}
+int main() {
+    JSON* null_json_value = ujson_parser("null");
+    JSON* true_json_value = ujson_parser("true");
+    JSON* false_json_value = ujson_parser("false");
+    
+    print_value(null_json_value);
+    print_value(true_json_value);
+    print_value(false_json_value);
 }

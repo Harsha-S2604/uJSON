@@ -4,14 +4,44 @@
 
 #include "ujson.h"
 
-int braces_are_valid(char* json_string, size_t total_characters) {
+typedef struct ujson_buffer {
+    const unsigned char* content;
+    size_t length;
+    size_t idx;
+} ujson_buffer;
+
+static ujson_buffer input_buffer = {0, 0, 0};
+
+static JSON* create_new_item() {
+    JSON* item = malloc(sizeof(JSON));
+    if (item) {
+        memset(item, '\0', sizeof(JSON));
+    }
+
+    return item;
+}
+
+static void init_buffer(char* content) {
+    size_t total_characters = strlen(content);
+
+    input_buffer.content = (const unsigned char*)content;
+    input_buffer.length = total_characters;
+}
+
+static void ignore_whitespaces(char* json_string, size_t total_chars, size_t* idx) {
+    while(*idx < total_chars && json_string[*idx] == ' ') {
+        (*idx)++;
+    }
+}
+
+static int braces_are_valid(char* json_string, size_t total_characters) {
     char opening_braces = json_string[0];
     char closing_braces = json_string[total_characters - 1];
     int valid_braces = opening_braces == '{' && closing_braces == '}';
     return valid_braces;
 }
 
-char* parse_string(char* json_string, char char_to_find, size_t* index, size_t total_characters) {
+static char* parse_string(char* json_string, char char_to_find, size_t* index, size_t total_characters) {
     char* parsed_string = (char*)malloc(1);
     if (!parsed_string) {
         return NULL;
@@ -19,7 +49,6 @@ char* parse_string(char* json_string, char char_to_find, size_t* index, size_t t
 
     size_t length = 0, capacity = 2;
     int valid_parse = 0;
-
     while (*index < total_characters) {
         char c = json_string[*index];
         if (c == char_to_find) {
@@ -45,7 +74,7 @@ char* parse_string(char* json_string, char char_to_find, size_t* index, size_t t
     return parsed_string;
 }
 
-UJSON_DATA_TYPES parse_data_type(char c) {
+static UJSON_DATA_TYPES parse_data_type(char c) {
     UJSON_DATA_TYPES dataType;
 
     switch (c) {
@@ -57,17 +86,16 @@ UJSON_DATA_TYPES parse_data_type(char c) {
     return dataType;
 }
 
-void parse_value(char* json_string, char* key, size_t* start_idx, size_t total_chars, JSON* json) {
+static void parse_value(char* json_string, char* key, size_t* start_idx, size_t total_chars, JSON* json) {
 
     // ignore whitespace if any
-    while(json_string[*start_idx] == ' ') {
-        (*start_idx)++;
-    }
+    ignore_whitespaces(json_string, total_chars, start_idx);
 
     UJSON_DATA_TYPES dataType = parse_data_type(json_string[*start_idx]);
  
     json -> dataType = dataType;
     json -> key = key;
+    json -> next = (JSON*)malloc(sizeof(JSON));
 
     switch (dataType) {
         case 0: {
@@ -75,6 +103,7 @@ void parse_value(char* json_string, char* key, size_t* start_idx, size_t total_c
             size_t char_start_idx = (*start_idx) + 1;
             char* value = parse_string(json_string, char_to_find, &char_start_idx, total_chars);
             json -> strValue = value;
+            *start_idx = char_start_idx;
             break;
         }
         default:
@@ -83,11 +112,41 @@ void parse_value(char* json_string, char* key, size_t* start_idx, size_t total_c
 
 }
 
-void ujson_parse(char* json_string, size_t total_chars, JSON** json_value) {
+static int ujson_parse(JSON* json_value) {
+    if (input_buffer.content == NULL) {
+        return 0;
+    }
+
+    // parsing null
+    if (strncmp((const char*)input_buffer.content, "null", 4) == 0) {
+        json_value -> dataType = 0;
+        input_buffer.idx += 4;
+        return 1;
+    }
+
+    // parsing true
+    if (strncmp((const char*)input_buffer.content, "true", 4) == 0) {
+        json_value -> dataType = 1;
+        input_buffer.idx += 4;
+        return 1;
+    }
+
+    // parsing false
+    if (strncmp((const char*)input_buffer.content, "false", 5) == 0) {
+        json_value -> dataType = 2;
+        input_buffer.idx += 5;
+        return 1;
+    }
+    
+    return 1;
+}
+
+/* static int ujson_parse_object(JSON** json_value) {
     JSON* json = *json_value;
     char* key = "";
 
     int str_idx = 1;
+    int is_valid = 1;
     
     while (str_idx < total_chars - 1) {
         char c = json_string[str_idx];
@@ -96,6 +155,13 @@ void ujson_parse(char* json_string, size_t total_chars, JSON** json_value) {
             case ':':
                 parse_value(json_string, key, &start_idx, total_chars, json);
                 json = json -> next;
+                
+                ignore_whitespaces(json_string, total_chars, &start_idx);
+                str_idx = start_idx + 1;
+    
+                if (json_string[str_idx] != ',' && str_idx != total_chars - 1) {
+                    is_valid = 0;
+                }
                 break;
             case '"':
             case '\'':
@@ -104,20 +170,31 @@ void ujson_parse(char* json_string, size_t total_chars, JSON** json_value) {
                 break;
         }
 
+        if (!is_valid) {
+            break;
+        }
+
         str_idx++;
     }
-}
+
+    json -> next = NULL;
+
+    return is_valid;
+} */
 
 JSON* ujson_parser(char* json_string) {
-    JSON* json_value = malloc(sizeof(JSON));
+    JSON* json_value = create_new_item();
+    if (json_value == NULL) {
+        printf("[PARSING ERROR]:: Failed to allocate memory");
+        return NULL;
+    }
 
-    size_t total_characters = strlen(json_string);
-
-    int valid_braces = braces_are_valid(json_string, total_characters);
-    if (!valid_braces) {
-        printf("[PARSING FAILED]:: invalid syntax\n");
-    } else {
-        ujson_parse(json_string, total_characters, &json_value);
+    init_buffer(json_string);
+        
+    int valid_json = ujson_parse(json_value);
+    if (!valid_json) {
+       printf("[PARSING ERROR]:: invalid syntax - expected value\n");
+       return NULL;
     }
 
     return json_value;

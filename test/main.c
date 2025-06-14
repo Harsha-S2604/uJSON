@@ -36,10 +36,20 @@ int main() {
     JSON* false_json_value = ujson_parser("false");
     JSON* float_json_value = ujson_parser("0.25");
     JSON* int_json_value = ujson_parser("25");
+    JSON* str_json_value = ujson_parser("\"Hello W\"orld\"");
+    
+    // whitespace handling
+    JSON* null_ws_json_value = ujson_parser("   null  ");
+    JSON* num_ws_json_value = ujson_parser("   23");
+    // JSON* true_ws_json_value = ujson_parser(" true");
+    // JSON* false_ws_json_value = ujson_parser(" false ");
 
     print_value(null_json_value);
     print_value(true_json_value);
     print_value(false_json_value);
     print_value(float_json_value);
     print_value(int_json_value);
+
+    print_value(null_ws_json_value);
+    print_value(num_ws_json_value);
 }

@@ -96,7 +96,60 @@ static int parse_number(JSON* json_value) {
 }
 
 static int parse_string(JSON* json_value) {
-    printf("%s PARSE STRING\n", input_buffer.content);
+    const unsigned char* start_place = buffer_at_offset(input_buffer) + 1;
+    const unsigned char* curr_place = buffer_at_offset(input_buffer) + 1;
+    size_t skip_char = 0;
+    while (*curr_place && *curr_place != '"') {
+        if (curr_place[0] == '\\') {
+            curr_place++;
+            skip_char += 1;
+        }
+        curr_place++;
+    }
+
+    if (*curr_place != '"') {
+        printf("[STRING PARSE ERROR]:: invalid string missing symbol \"\n");
+        return 0;
+    }
+
+    size_t total_memory_to_allocate = (curr_place - start_place) - skip_char;
+    unsigned char* result_str = malloc(sizeof(char) * total_memory_to_allocate);
+    if (result_str == NULL) {
+        printf("[STR PARSE ERROR]:: Failed to allocate memory\n");
+        return 0;
+    }
+    
+    int idx = 0;
+    while (start_place < curr_place) {
+        char char_to_append;
+        if (*start_place == '\\') {
+          char escape_char = *(++start_place);
+
+          switch (escape_char) {
+            case 'b':
+                char_to_append = '\b';
+                break;
+            case 't':
+                char_to_append = '\t';
+                break;
+            case 'n':
+                char_to_append = '\n';
+                break;
+            default:
+                break;
+          }
+        } else {
+            char_to_append = *start_place;
+        }
+
+        result_str[idx] = char_to_append;
+        idx++;
+        start_place++;
+    }
+
+    json_value -> dataType = UJSON_STRING;
+    json_value -> strValue = (char*)result_str;
+
     return 1;
 }
 

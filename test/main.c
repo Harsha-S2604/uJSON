@@ -14,7 +14,7 @@ void print_value(JSON* json) {
                 printf("false\n");
                 break;
             case 3:
-                printf("string\n");
+                printf("%s\n", json -> strValue);
                 break;
             case 4:
                 printf("%zu\n", json -> intValue);
@@ -36,8 +36,8 @@ int main() {
     JSON* false_json_value = ujson_parser("false");
     JSON* float_json_value = ujson_parser("0.25");
     JSON* int_json_value = ujson_parser("25");
-    JSON* str_json_value = ujson_parser("\"Hello W\"orld\"");
-    
+    JSON* str_json_value = ujson_parser("\"Hello World\"");
+    JSON* str_es_json_value = ujson_parser("\"Hello W\\torld\"");
     // whitespace handling
     JSON* null_ws_json_value = ujson_parser("   null  ");
     JSON* num_ws_json_value = ujson_parser("   23");
@@ -49,6 +49,9 @@ int main() {
     print_value(false_json_value);
     print_value(float_json_value);
     print_value(int_json_value);
+    print_value(str_json_value);
+    print_value(str_es_json_value);
+
 
     print_value(null_ws_json_value);
     print_value(num_ws_json_value);

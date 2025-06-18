@@ -13,8 +13,8 @@
 typedef struct JSON {
     int dataType;
 
-    char* key;
-    char* strValue;
+    unsigned char* key;
+    unsigned char* strValue;
     
     size_t intValue;
     double floatValue;

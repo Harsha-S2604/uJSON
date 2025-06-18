@@ -1,6 +1,20 @@
 #include <stdio.h>
 #include <ujson/ujson.h>
 
+void printJsonValue(JSON* json, int withComma);
+void print_object(JSON* json);
+void print_array(JSON* json);
+void print_value(JSON* json);
+
+void print_object(JSON* json) {
+    printf("{\n");
+    while (json) {
+        printf("    %s: ", json -> key);
+        print_value(json);
+        json = json -> next;
+    }
+    printf("}\n");
+}
 void printJsonValue(JSON* json, int withComma) {
     switch (json->dataType) {
         case UJSON_NULL:
@@ -46,26 +60,29 @@ void print_array(JSON* json) {
 
 void print_value(JSON* json) {
         switch (json -> dataType) {
-            case 0:
+            case UJSON_NULL:
                 printf("null\n");
                 break;
-            case 1:
+            case UJSON_TRUE:
                 printf("true\n");
                 break;
-            case 2:
+            case UJSON_FALSE:
                 printf("false\n");
                 break;
-            case 3:
+            case UJSON_STRING:
                 printf("%s\n", json -> strValue);
                 break;
-            case 4:
+            case UJSON_INTEGER:
                 printf("%zu\n", json -> intValue);
                 break;
-            case 5:
+            case UJSON_FLOAT:
                 printf("%f\n", json -> floatValue);
                 break;
-            case 6:
+            case UJSON_ARRAY:
                 print_array(json -> next);
+                break;
+            case UJSON_OBJECT:
+                print_object(json -> next);
                 break;
             default:
                 break;
@@ -82,7 +99,7 @@ int main() {
     // JSON* int_json_value = ujson_parser("25");
     // JSON* str_json_value = ujson_parser("\"Hello World\"");
     // JSON* str_es_json_value = ujson_parser("\"Hello W\\torld\"");
-    JSON* arr_json_value = ujson_parser("[\"hello\", \"hi\", 123, null, true, false]");
+    // JSON* arr_json_value = ujson_parser("[\"hello\", \"hi\", 123, null, true, false]");
     // whitespace handling
     // JSON* null_ws_json_value = ujson_parser("   null  ");
     // JSON* num_ws_json_value = ujson_parser("   23");
@@ -101,5 +118,7 @@ int main() {
 //     print_value(null_ws_json_value);
 //     print_value(num_ws_json_value);
 // 
-    print_value(arr_json_value);
+    JSON* obj_json_value = ujson_parser("{\"name\": \"John\", \"age\": 30, \"arr\": [1, 2, 3]}");
+    // whitespace handling
+    print_value(obj_json_value);
 }

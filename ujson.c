@@ -41,6 +41,12 @@ static void ignore_whitespaces() {
     }
 }
 
+static unsigned char* sanitize_input() {
+    ignore_whitespaces();
+    unsigned char* sanitized_input = (unsigned char*)buffer_at_offset(input_buffer);
+    return sanitized_input;
+}
+
 static int braces_are_valid(char* json_string, size_t total_characters) {
     char opening_braces = json_string[0];
     char closing_braces = json_string[total_characters - 1];
@@ -109,6 +115,68 @@ static int parse_number(JSON* json_value) {
     return 1;
 }
 
+static unsigned char* get_str() {
+    const unsigned char* start_place = buffer_at_offset(input_buffer) + 1;
+    const unsigned char* curr_place = buffer_at_offset(input_buffer) + 1;
+    
+    input_buffer.idx++;
+    size_t skip_char = 0;
+    while (*curr_place && *curr_place != '"') {
+        if (curr_place[0] == '\\') {
+            curr_place++;
+            skip_char += 1;
+
+            input_buffer.idx++;
+        }
+        curr_place++;
+        input_buffer.idx++;
+    }
+
+    if (*curr_place != '"') {
+        printf("[STRING PARSE ERROR]:: invalid string missing symbol \"\n");
+        return NULL;
+    }
+   
+    size_t total_chars = curr_place - start_place;
+    size_t total_memory_to_allocate = (curr_place - start_place) - skip_char;
+    unsigned char* result_str = malloc(sizeof(char) * total_memory_to_allocate);
+    if (result_str == NULL) {
+        printf("[STR PARSE ERROR]:: Failed to allocate memory\n");
+        return NULL;
+    }
+    
+    int idx = 0;
+    while (start_place < curr_place) {
+        char char_to_append;
+        if (*start_place == '\\') {
+          char escape_char = *(++start_place);
+
+          switch (escape_char) {
+            case 'b':
+                char_to_append = '\b';
+                break;
+            case 't':
+                char_to_append = '\t';
+                break;
+            case 'n':
+                char_to_append = '\n';
+                break;
+            default:
+                break;
+          }
+        } else {
+            char_to_append = *start_place;
+        }
+    
+        result_str[idx] = char_to_append;
+        idx++;
+        start_place++;
+    }
+
+    return result_str;
+
+}
+
 static int parse_string(JSON* json_value) {
     const unsigned char* start_place = buffer_at_offset(input_buffer) + 1;
     const unsigned char* curr_place = buffer_at_offset(input_buffer) + 1;
@@ -168,7 +236,7 @@ static int parse_string(JSON* json_value) {
     }
     
     json_value -> dataType = UJSON_STRING;
-    json_value -> strValue = (char*)result_str;
+    json_value -> strValue = result_str;
     
     input_buffer.idx++;
     return 1;
@@ -205,6 +273,49 @@ static int parse_array(JSON* json_value) {
             ignore_whitespaces();
         }
         character = buffer_at_offset(input_buffer);
+
+    }
+
+    return 1;
+}
+
+static int parse_object(JSON* json_value) {
+    input_buffer.idx += 1;
+    unsigned char* json_str = sanitize_input();
+    unsigned char* key = NULL;
+    
+    json_value -> dataType = UJSON_OBJECT;
+    while (json_str && *json_str != '}') {
+        if (*json_str == '\"') {
+            // parse key
+            key = get_str(); 
+            json_str = (unsigned char*)buffer_at_offset(input_buffer);
+            if (*json_str != '\"') {
+                printf("[OBJECT PARSE ERROR]:: syntax error expected a string\n");
+                return 0;
+            }
+
+            input_buffer.idx += 1;
+            json_str = sanitize_input();
+            if (*json_str != ':') {
+                printf("[OBJECT PARSE ERROR]:: expected ':' after key\n");
+                return 0;
+            }
+
+            input_buffer.idx += 1;  // Skip ':'
+            json_str = sanitize_input();
+
+            JSON* json_item = ujson_parse();
+            json_item->key = key;
+
+            json_value->next = json_item;
+            json_value = json_value->next;
+
+            key = NULL;
+        }
+
+        input_buffer.idx += 1;
+        json_str++;
 
     }
 
@@ -262,6 +373,12 @@ static JSON* ujson_parse() {
     // parsing array
     if (char_at_idx == '[') {
         parse_array(json_value);
+        return json_value;
+    }
+
+    // parsing object
+    if (char_at_idx == '{') {
+        parse_object(json_value);
         return json_value;
     }
 

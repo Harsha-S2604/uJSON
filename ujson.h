@@ -7,10 +7,8 @@
 #define UJSON_STRING 3
 #define UJSON_INTEGER 4
 #define UJSON_FLOAT 5
-#define UJSON_ARRAY_OF_STRINGS 6
-#define UJSON_ARRAY_OF_INTEGERS 7
-#define UJSON_ARRAY_OF_FLOATS 8
-#define UJSON_OBJECT 9
+#define UJSON_ARRAY 6
+#define UJSON_OBJECT 7
 
 typedef struct JSON {
     int dataType;

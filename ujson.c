@@ -167,7 +167,7 @@ static unsigned char* get_str() {
         } else {
             char_to_append = *start_place;
         }
-    
+        
         result_str[idx] = char_to_append;
         idx++;
         start_place++;
@@ -257,10 +257,10 @@ static int parse_array(JSON* json_value) {
     input_buffer.idx += 1;
     json_value -> dataType = UJSON_ARRAY;
     const unsigned char* character = buffer_at_offset(input_buffer);
-    while (character && *character != ']') {
+    while (character && *character && *character != ']') {
         JSON* json_item = ujson_parse();
-        json_value -> next = json_item;
-        json_value = json_value -> next;
+        json_value -> child = json_item;
+        json_value = json_value -> child;
 
         char end_char = buffer_at_idx(input_buffer);
         if (end_char != ']' && end_char != ',') {
@@ -269,13 +269,14 @@ static int parse_array(JSON* json_value) {
         }
         
         if (end_char != ']') {
-            input_buffer.idx += 1;
             ignore_whitespaces();
         }
+        input_buffer.idx += 1;
         character = buffer_at_offset(input_buffer);
 
     }
-
+    
+    input_buffer.idx += 1;
     return 1;
 }
 
@@ -285,10 +286,10 @@ static int parse_object(JSON* json_value) {
     unsigned char* key = NULL;
     
     json_value -> dataType = UJSON_OBJECT;
-    while (json_str && *json_str != '}') {
+    while (json_str && *json_str && *json_str != '}') {
         if (*json_str == '\"') {
             // parse key
-            key = get_str(); 
+            key = get_str();
             json_str = (unsigned char*)buffer_at_offset(input_buffer);
             if (*json_str != '\"') {
                 printf("[OBJECT PARSE ERROR]:: syntax error expected a string\n");
@@ -304,19 +305,23 @@ static int parse_object(JSON* json_value) {
 
             input_buffer.idx += 1;  // Skip ':'
             json_str = sanitize_input();
-
+            
             JSON* json_item = ujson_parse();
-            json_item->key = key;
+            json_str = sanitize_input();
+            if (*json_str != '}' && *json_str != ',') {
+                printf("[OBJECT PARSE ERROR]:: syntax error expected ,\n");
+                return 0;
+            }
 
-            json_value->next = json_item;
-            json_value = json_value->next;
+            json_item -> key = key;
+            json_value -> next = json_item;
+            json_value = json_value -> next;
 
             key = NULL;
         }
-
+        
         input_buffer.idx += 1;
         json_str++;
-
     }
 
     return 1;

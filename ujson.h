@@ -18,7 +18,8 @@ typedef struct JSON {
     
     size_t intValue;
     double floatValue;
-
+    
+    struct JSON* child;
     struct JSON* next;
 } JSON;
 

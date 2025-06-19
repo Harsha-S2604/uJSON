@@ -6,6 +6,32 @@ void print_object(JSON* json);
 void print_array(JSON* json);
 void print_value(JSON* json);
 
+void print_object_value(JSON** json) {
+    switch((*json) -> dataType) {
+        case UJSON_NULL:
+            printf("null");
+            break;
+        case UJSON_TRUE:
+            printf("true");
+            break;
+        case UJSON_FALSE:
+            printf("false");
+            break;
+        case UJSON_STRING:
+            printf("%s", (*json) -> strValue);
+            break;
+        case UJSON_INTEGER:
+            printf("%zu", (*json) -> intValue);
+            break;
+        case UJSON_FLOAT:
+            printf("%f", (*json) -> floatValue);
+            break;
+        case UJSON_ARRAY:
+            break;
+            
+    }
+}
+
 void print_object(JSON* json) {
     printf("{\n");
     while (json) {
@@ -48,12 +74,12 @@ void printJsonValue(JSON* json, int withComma) {
 void print_array(JSON* json) {
     printf("[");
     while (json != NULL) {
-        if (json -> next == NULL) {
+        if (json -> child == NULL) {
             printJsonValue(json, 0);
         } else {
             printJsonValue(json, 1);
         }
-        json = json -> next;
+        json = json -> child;
     }
     printf("]\n");
 }
@@ -79,7 +105,7 @@ void print_value(JSON* json) {
                 printf("%f\n", json -> floatValue);
                 break;
             case UJSON_ARRAY:
-                print_array(json -> next);
+                print_array(json -> child);
                 break;
             case UJSON_OBJECT:
                 print_object(json -> next);

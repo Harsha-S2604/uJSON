@@ -256,6 +256,7 @@ static int parse_array(JSON* json_value) {
     
     input_buffer.idx += 1;
     json_value -> dataType = UJSON_ARRAY;
+
     const unsigned char* character = buffer_at_offset(input_buffer);
     while (character && *character && *character != ']') {
         JSON* json_item = ujson_parse();
@@ -269,9 +270,9 @@ static int parse_array(JSON* json_value) {
         }
         
         if (end_char != ']') {
+            input_buffer.idx += 1;
             ignore_whitespaces();
         }
-        input_buffer.idx += 1;
         character = buffer_at_offset(input_buffer);
 
     }
@@ -314,8 +315,15 @@ static int parse_object(JSON* json_value) {
             }
 
             json_item -> key = key;
-            json_value -> next = json_item;
-            json_value = json_value -> next;
+
+            if (json_item -> dataType == UJSON_OBJECT) {
+                printf("JSON OBJECT %s\n", key);
+                json_value -> child = json_item;
+                json_value = json_value -> child;
+            } else {
+                json_value -> next = json_item;
+                json_value = json_value -> next;
+            }
 
             key = NULL;
         }

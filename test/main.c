@@ -6,38 +6,23 @@ void print_object(JSON* json);
 void print_array(JSON* json);
 void print_value(JSON* json);
 
-void print_object_value(JSON** json) {
-    switch((*json) -> dataType) {
-        case UJSON_NULL:
-            printf("null");
-            break;
-        case UJSON_TRUE:
-            printf("true");
-            break;
-        case UJSON_FALSE:
-            printf("false");
-            break;
-        case UJSON_STRING:
-            printf("%s", (*json) -> strValue);
-            break;
-        case UJSON_INTEGER:
-            printf("%zu", (*json) -> intValue);
-            break;
-        case UJSON_FLOAT:
-            printf("%f", (*json) -> floatValue);
-            break;
-        case UJSON_ARRAY:
-            break;
-            
-    }
-}
 
 void print_object(JSON* json) {
+    if (json -> child) {
+        json = json -> child;
+    } else {
+        json = json -> next;
+    }
+
     printf("{\n");
     while (json) {
         printf("    %s: ", json -> key);
         print_value(json);
-        json = json -> next;
+        if (json -> child) {
+            json = json -> child;
+        } else {
+            json = json -> next;
+        }
     }
     printf("}\n");
 }
@@ -108,7 +93,7 @@ void print_value(JSON* json) {
                 print_array(json -> child);
                 break;
             case UJSON_OBJECT:
-                print_object(json -> next);
+                print_object(json);
                 break;
             default:
                 break;
@@ -144,7 +129,8 @@ int main() {
 //     print_value(null_ws_json_value);
 //     print_value(num_ws_json_value);
 // 
-    JSON* obj_json_value = ujson_parser("{\"name\": \"John\", \"age\": 30, \"arr\": [1, 2, 3]}");
     // whitespace handling
-    print_value(obj_json_value);
+    JSON* obj_json_value = ujson_parser("{\"name\": \"John\", \"age\": 30, \"arr\": [1, 2, 3]}");
+    JSON* nes_obj_json_value = ujson_parser("{\"AI\":{\"openAI\":{\"model\":\"GPT-4o mini\"}}}");
+    print_value(nes_obj_json_value);
 }
